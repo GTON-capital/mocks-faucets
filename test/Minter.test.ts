@@ -1,5 +1,5 @@
 import { ethers, waffle } from "hardhat";
-import { BigNumber, BigNumberish, ContractReceipt, Wallet } from "ethers"
+import { BigNumber, BigNumberish, Wallet } from "ethers"
 import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
 import { Minter } from "../typechain/Minter"
@@ -17,16 +17,18 @@ export function expandTo18Decimals(n: BigNumberish): BigNumber {
 }
 
 export const timestampSetter: (provider: any) => (timestamp: number) => Promise<void> =
-  (provider) => async (timestamp: number) => await provider.send("evm_mine", [timestamp])
+    (provider) => async (timestamp: number) => await provider.send("evm_mine", [timestamp])
 
 export const blockGetter: (provider: any, type: string) => () => Promise<number> =
-  (provider, type) => async () => (await provider.getBlock("latest"))[type]
+    (provider, type) => async () => (await provider.getBlock("latest"))[type]
 
 describe("Minter", function () {
     const [wallet, bob, carol, alice, dev] = waffle.provider.getWallets()
     const getTimestamp = blockGetter(waffle.provider, "timestamp");
     const setTimestamp = timestampSetter(waffle.provider);
     const period = 15000;
+    const discount = 2500;
+    const zeroAddress = "0x0000000000000000000000000000000000000000"
 
     let Minter: any
     let ERC20: any
@@ -64,7 +66,7 @@ describe("Minter", function () {
             nft.address,
             gtonPrice.address,
             pmmPool.address,
-            2500,
+            discount,
             period
         );
         await gcd.transferOwnership(minter.address);
@@ -77,16 +79,25 @@ describe("Minter", function () {
 
     async function mint(user: Wallet, amount: BigNumber): Promise<BigNumber> {
         await gton.approve(minter.address, amount)
-        const id = await minter.connect(user).callStatic.mint(amount) // static call allows us to get return value
-        await minter.mint(amount)
+        // static call allows us to get return value without changing the state
+        const id = await minter.connect(user).callStatic.mint(amount)
+        await minter.connect(user).mint(amount)
         return id;
+    }
+
+    async function getGcdMint(amount: BigNumber): Promise<BigNumber> {
+        const price = (await gtonPrice.latestRoundData()).answer
+        const decimals = await gtonPrice.decimals()
+        return amount.mul(price).div(decimals)
     }
 
     it("mint should transfer to pmm", async () => {
         const amount = expandTo18Decimals(120)
         await mint(wallet, amount)
+        const amountWithoutDiscount = await minter.amountWithoutDiscount(amount)
+        const pmmPart = await getGcdMint(amountWithoutDiscount)
         expect(await gton.balanceOf(pmmPool.address)).to.eq(amount);
-        // expect(await gcd.balanceOf(pmmPool.address)).to.eq(amount);
+        expect(await gcd.balanceOf(pmmPool.address)).to.eq(pmmPart);
     })
 
     it("mint should issue bond", async () => {
@@ -101,7 +112,7 @@ describe("Minter", function () {
         const ts = await getTimestamp();
         await nft.approve(minter.address, id);
         await expect(minter.claim(id)).to.be.revertedWith("Minter: cannot claim not expired bond");
-        await setTimestamp(ts+period);
+        await setTimestamp(ts + period);
         await minter.claim(id);
     })
 
@@ -110,7 +121,7 @@ describe("Minter", function () {
         const id = await mint(wallet, amount)
         const ts = await getTimestamp();
         await nft.approve(minter.address, id);
-        await setTimestamp(ts+period);
+        await setTimestamp(ts + period);
         await minter.claim(id);
         await expect(minter.claim(id)).to.be.reverted;
     })
@@ -126,9 +137,27 @@ describe("Minter", function () {
         const id = await mint(wallet, amount)
         const ts = await getTimestamp();
         await nft.approve(minter.address, id);
-        await setTimestamp(ts+period);
+        await setTimestamp(ts + period);
         await minter.claim(id);
         const [releaseAmount] = await nft.bondInfo(id);
         expect(await gcd.balanceOf(wallet.address)).to.eq(releaseAmount)
     })
+
+    it("correct discount calculation", async () => {
+        const amount = expandTo18Decimals(500);
+        const amountWithDiscount = amount.div(100).mul(100 - (discount / 100)) // discount has 2 more decimals to save calcs
+        const res = await minter.amountWithoutDiscount(amountWithDiscount);
+        expect(res).to.eq(amount)
+    })
+
+    it("mint call mints correct amount of gcd", async () => {
+        const amount = expandTo18Decimals(500);
+        const amountWithDiscount = amount.div(100).mul(100 - (discount / 100))
+        const amountInUsd = await getGcdMint(amount)
+        await gton.approve(minter.address, amountWithDiscount)
+        await expect(minter.mint(amountWithDiscount))
+        .to.emit(gcd, "Transfer")
+        .withArgs(zeroAddress, minter.address, amountInUsd.mul(2)); // mints doubled amount of gcd
+    })
+
 });
