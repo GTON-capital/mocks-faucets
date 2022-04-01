@@ -156,8 +156,7 @@ describe("Minter", function () {
         const amountInUsd = await getGcdMint(amount)
         await gton.approve(minter.address, amountWithDiscount)
         await expect(minter.mint(amountWithDiscount))
-        .to.emit(gcd, "Transfer")
-        .withArgs(zeroAddress, minter.address, amountInUsd.mul(2)); // mints doubled amount of gcd
+            .to.emit(gcd, "Transfer")
+            .withArgs(zeroAddress, minter.address, amountInUsd.mul(2)); // mints doubled amount of gcd
     })
-
 });
