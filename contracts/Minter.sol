@@ -20,7 +20,8 @@ contract Minter is IMinter, ERC721Holder {
         BondNFT _bond, 
         AggregatorV3Interface _price, 
         IPMM _pool,
-        uint _discountNominator
+        uint _discountNominator,
+        uint _lockPeriod
         ) {
         bond = _bond;
         gton = _gton;
@@ -28,10 +29,12 @@ contract Minter is IMinter, ERC721Holder {
         gtonPrice = _price;
         pool = _pool;
         discountNominator = _discountNominator;
+        lockPeriod = _lockPeriod;
     }
 
     // ---------- Variables -----------
     uint public discountNominator;
+    uint public lockPeriod;
     AggregatorV3Interface public gtonPrice;
     IPMM public pool;
 
@@ -56,16 +59,20 @@ contract Minter is IMinter, ERC721Holder {
         uint8 decimals = gtonPrice.decimals();
         uint mintAmount = amountWithoutDiscount(amount) * uint(price) / decimals;
         gcd.mint(address(this), mintAmount * 2);
+        gton.approve(address(pool), amount);
         pool.updateAsk(amount); // gton
+        gcd.approve(address(pool), mintAmount);
         pool.updateBid(mintAmount); // gcd
-        id = bond.mint(msg.sender, mintAmount);
+        uint releaseTs = block.timestamp + lockPeriod;
+        id = bond.mint(msg.sender, mintAmount, releaseTs);
     }
 
     function claim(uint bondId) external override {
         // After transfer bond stays on the contract and can't be transfered etc, so we are safe here
         // And this transfer prevents from passing id that you do not own
         bond.safeTransferFrom(msg.sender, address(this), bondId);
-        uint amount = bond.bondAmount(bondId);
+        (uint amount, uint release) = bond.bondInfo(bondId);
+        require(block.timestamp >= release, "Minter: cannot claim not expired bond"); 
         gcd.transfer(msg.sender, amount);
     }
 }
