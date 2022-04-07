@@ -5,21 +5,23 @@ import "hardhat/console.sol";
 
 import { IMinter } from "./interfaces/IMinter.sol";
 import { IGCD } from "./interfaces/IGCD.sol";
-import { IPMM } from "./interfaces/IPMM.sol";
+import { IDODODppProxy } from "./interfaces/IDODODppProxy.sol";
 import { BondNFT } from "./BondNFT.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC721Holder } from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-contract Minter is IMinter, ERC721Holder {
+contract Minter is IMinter, ERC721Holder, Ownable {
 
     constructor(
         ERC20 _gton, 
         IGCD _gcd, 
         BondNFT _bond, 
         AggregatorV3Interface _price, 
-        IPMM _pool,
+        IDODODppProxy _poolProxy,
+        address _approveAddress,
+        address _dppPool,
         uint _discountNominator,
         uint _lockPeriod
         ) {
@@ -27,7 +29,9 @@ contract Minter is IMinter, ERC721Holder {
         gton = _gton;
         gcd = _gcd;
         gtonPrice = _price;
-        pool = _pool;
+        poolProxy = _poolProxy;
+        approveAddress = _approveAddress;
+        dppPool = _dppPool;
         discountNominator = _discountNominator;
         lockPeriod = _lockPeriod;
     }
@@ -35,8 +39,15 @@ contract Minter is IMinter, ERC721Holder {
     // ---------- Variables -----------
     uint public discountNominator;
     uint public lockPeriod;
+    address public approveAddress;
+    address public dppPool;
     AggregatorV3Interface public gtonPrice;
-    IPMM public pool;
+    IDODODppProxy public poolProxy;
+    uint[] public dppParams = [0, 1e12];
+    
+    // it's necessary to use the storage amounts variable to make compatible input call for dodo pool
+    // every uint[] memory initialization will cause the fixed array error (input expects not fixed array)
+    uint[] private dppAmounts = [0, 0, 0, 0];
 
     // ---------- Constants -----------
     uint immutable public denominator = 10000;
@@ -59,10 +70,13 @@ contract Minter is IMinter, ERC721Holder {
         uint8 decimals = gtonPrice.decimals();
         uint mintAmount = amountWithoutDiscount(amount) * uint(price) / decimals;
         gcd.mint(address(this), mintAmount * 2);
-        gton.approve(address(pool), amount);
-        pool.updateAsk(amount); // gton
-        gcd.approve(address(pool), mintAmount);
-        pool.updateBid(mintAmount); // gcd
+        gton.approve(approveAddress, amount);
+        gcd.approve(approveAddress, mintAmount);
+        // id's 2 and 3 are zeros by default. See IDODOppProxy notation
+        dppAmounts.push(amount);
+        dppAmounts.push(mintAmount);
+        // by default gton is base and gcd is quote
+        poolProxy.resetDODOPrivatePool(dppPool, dppParams, dppAmounts, 0, 0, 0, block.timestamp + 1000);
         uint releaseTs = block.timestamp + lockPeriod;
         id = bond.mint(msg.sender, mintAmount, releaseTs);
     }
@@ -75,4 +89,30 @@ contract Minter is IMinter, ERC721Holder {
         require(block.timestamp >= release, "Minter: cannot claim not expired bond"); 
         gcd.transfer(msg.sender, amount);
     }
+
+    // ----------- Owner updates -----------
+
+    function updateDiscount(uint discount) external onlyOwner {
+        discountNominator = discount;
+    } 
+
+    function updateLockPeriod(uint period) external onlyOwner {
+        lockPeriod = period;
+    } 
+
+    function updateGtonPrice(AggregatorV3Interface aggregator) external onlyOwner {
+        gtonPrice = aggregator;
+    } 
+
+    function updatepoolProxy(IDODODppProxy _poolProxy) external onlyOwner {
+        poolProxy = _poolProxy;
+    } 
+
+    function updatePoolParams(uint[] memory params) external onlyOwner {
+        dppParams = params;
+    } 
+
+    function updateapproveAddress(address newProxy) external onlyOwner {
+        approveAddress = newProxy;
+    } 
 }

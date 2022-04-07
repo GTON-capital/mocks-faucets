@@ -9,6 +9,8 @@ async function main() {
 
   const gcd = await GCD.deploy("GTON USD", "GCD");
   await gcd.deployed();
+  console.log("GCD deployed to:", gcd.address);
+
   const bond = await BondNFT.deploy("GCD Bond", "GCDB");
   await bond.deployed();
 
@@ -17,8 +19,11 @@ async function main() {
     gcd.address,
     bond.address,
     process.env.ORACLE_PRICE || "",
-    process.env.POOL_ADDRESS || "",
-    process.env.DISCOUNT || ""
+    process.env.POOL_PROXY || "",
+    process.env.APPROVE_ADDRESS || "",
+    process.env.DPP_ADDRESS || "",
+    process.env.DISCOUNT || "",
+    process.env.LOCK_PERIOD || "",
   );
 
   await minter.deployed();

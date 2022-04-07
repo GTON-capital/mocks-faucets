@@ -1,18 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IDODODppProxy } from "../interfaces/IDODODppProxy.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-contract MockPMM is IDODODppProxy {
-
-    IERC20 public gton;
-    IERC20 public gcd;
-
-    constructor(IERC20 _gton, IERC20 _gcd)  {
-        gton = _gton;
-        gcd = _gcd;
-    }
+interface IDODODppProxy {
 
   function resetDODOPrivatePool(
         address dppAddress,
@@ -22,8 +11,5 @@ contract MockPMM is IDODODppProxy {
         uint256 minBaseReserve,
         uint256 minQuoteReserve,
         uint256 deadLine
-    ) external override payable {
-
-    }
-
+    ) external payable;
 }
