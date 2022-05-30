@@ -14,4 +14,5 @@ contract GCD is IGCD, ERC20, Ownable {
     function mint(address to, uint amount) public override onlyOwner {
         _mint(to, amount);
     }
+    
 }

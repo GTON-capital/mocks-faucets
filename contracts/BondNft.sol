@@ -11,16 +11,24 @@ contract BondNFT is IBondNFT, ERC721, Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdTracker;
-    // Probably it is possible to use uint[] here, but if so - fix Minter.sol 51 line
-    mapping(uint => uint) public bondAmount;
+
+    struct BondInfo {
+        uint amount;
+        uint releaseTs;
+    }
+
+    mapping(uint => BondInfo) public bondInfo;
 
     constructor(string memory name, string memory symbol) 
         ERC721(name, symbol) {}
 
-    function mint(address to, uint amount) external override onlyOwner returns(uint id) {
+    function mint(address to, uint amount, uint releaseTs) external override onlyOwner returns(uint id) {
         id = _tokenIdTracker.current();
-        bondAmount[id] = amount;
+        bondInfo[id] = BondInfo(amount, releaseTs);
         _mint(to, id);
         _tokenIdTracker.increment();
+        emit Mint(id, to);
     }
+
+    event Mint(uint id, address to);
 }
