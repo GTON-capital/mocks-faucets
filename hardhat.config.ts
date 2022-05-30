@@ -6,6 +6,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "@nomiclabs/hardhat-etherscan";
 
 dotenv.config();
 
@@ -16,11 +17,13 @@ const accounts =
   process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [];
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.4",
+  solidity: "0.8.14",
   networks: {
     ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts,
+      url: "https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+      accounts: accounts,
+      gasPrice: 220 * 1e9,
+      gasMultiplier: 1,
     },
     "fantom-testnet": {
       chainId: 4002,
@@ -34,6 +37,10 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  typechain: {
+    outDir: "types",
+    target: "ethers-v5",
   },
 };
 

@@ -32,6 +32,9 @@
     "typechain": "^5.2.0",
     "typescript": "^4.6.2"
   },
+  "scripts": {
+    "deploy:ropsten": "hardhat run --network ropsten ./scripts/deploy.ts"
+  },
   "dependencies": {
     "@chainlink/contracts": "^0.4.0",
     "@openzeppelin/contracts": "^4.5.0"

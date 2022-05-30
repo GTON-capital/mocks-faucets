@@ -1,8 +1,38 @@
 import { ethers } from "hardhat";
+const hre = require("hardhat")
 import * as dotenv from "dotenv";
 
 dotenv.config();
 async function main() {
+  await deployMockGCD()
+}
+
+async function deployMockGCD() {
+  const [deployer] = await ethers.getSigners()
+  console.log("Deploying contracts with the account:", deployer.address)
+  console.log("Account balance:", (await deployer.getBalance()).toString())
+
+  const factory = await ethers.getContractFactory("MockGCD")
+  const contract = await factory.deploy(
+    "GCDMock",
+    "GCDMock",
+  )
+  console.log("Contract deploying to:", contract.address)
+
+  console.log("Waiting for deploy")
+  await contract.deployed()
+  console.log("Deployed")
+
+  await hre.run("verify:verify", {
+    address: contract.address,
+    constructorArguments: [
+      "GCDMock",
+      "GCDMock",
+    ]
+  })
+}
+
+async function deployGCD() {
   const GCD = await ethers.getContractFactory("GCD");
   const BondNFT = await ethers.getContractFactory("BondNFT");
   const Minter = await ethers.getContractFactory("Minter");

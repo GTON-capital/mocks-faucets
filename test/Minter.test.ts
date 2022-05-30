@@ -9,7 +9,7 @@ import {
     GCD,
     MockAggregator,
     MockPMM
-} from "../typechain"
+} from "../types"
 
 use(solidity);
 
