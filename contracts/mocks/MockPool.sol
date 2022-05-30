@@ -23,7 +23,6 @@ contract MockPMM is IDODODppProxy {
         uint256 minQuoteReserve,
         uint256 deadLine
     ) external override payable {
-
     }
 
 }

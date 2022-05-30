@@ -2,12 +2,14 @@ import { ethers, waffle } from "hardhat";
 import { BigNumber, BigNumberish, Wallet } from "ethers"
 import { expect, use } from "chai";
 import { solidity } from "ethereum-waffle";
-import { Minter } from "../typechain/Minter"
-import { MockERC20 } from "../typechain/MockERC20"
-import { BondNFT } from "../typechain/BondNFT"
-import { GCD } from "../typechain/GCD"
-import { MockAggregator } from "../typechain/MockAggregator"
-import { MockPMM } from "../typechain/MockPMM";
+import { 
+    Minter,
+    MockERC20,
+    BondNFT,
+    GCD,
+    MockAggregator,
+    MockPMM
+} from "../typechain"
 
 use(solidity);
 
@@ -65,6 +67,8 @@ describe("Minter", function () {
             gcd.address,
             nft.address,
             gtonPrice.address,
+            gtonPrice.address, // Need proxy address
+            gtonPrice.address, // Need approve address
             pmmPool.address,
             discount,
             period

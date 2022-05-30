@@ -19,8 +19,11 @@ contract BondNFT is IBondNFT, ERC721, Ownable {
 
     mapping(uint => BondInfo) public bondInfo;
 
-    constructor(string memory name, string memory symbol) 
-        ERC721(name, symbol) {}
+    constructor(
+        string memory name, 
+        string memory symbol
+    ) ERC721(name, symbol) {
+    }
 
     function mint(address to, uint amount, uint releaseTs) external override onlyOwner returns(uint id) {
         id = _tokenIdTracker.current();
