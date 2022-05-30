@@ -13,6 +13,12 @@ dotenv.config();
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
+const {
+  ETHERSCAN, 
+  POLYGONSCAN, 
+  FTMSCAN,
+} = process.env;
+
 const accounts =
   process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [];
 
@@ -22,8 +28,8 @@ const config: HardhatUserConfig = {
     ropsten: {
       url: "https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
       accounts: accounts,
-      gasPrice: 220 * 1e9,
-      gasMultiplier: 1,
+      gasPrice: 80 * 1e9,
+      gasMultiplier: 1.1,
     },
     "fantom-testnet": {
       chainId: 4002,
@@ -31,12 +37,12 @@ const config: HardhatUserConfig = {
       accounts,
     },
   },
+  etherscan: {
+    apiKey: ETHERSCAN
+  },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
-  },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
   },
   typechain: {
     outDir: "types",
