@@ -33,7 +33,8 @@
     "typescript": "^4.6.2"
   },
   "scripts": {
-    "deploy:ropsten": "hardhat run --network ropsten ./scripts/deploy.ts"
+    "deploy:ropsten": "hardhat run --network ropsten ./scripts/deploy.ts",
+    "deploy:rinkeby": "hardhat run --network rinkeby ./scripts/deploy.ts"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.0",

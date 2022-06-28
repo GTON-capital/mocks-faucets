@@ -31,6 +31,10 @@ const config: HardhatUserConfig = {
       gasPrice: 80 * 1e9,
       gasMultiplier: 1.1,
     },
+    rinkeby: {
+      url: "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+      accounts: accounts,
+    },
     "fantom-testnet": {
       chainId: 4002,
       url: "https://rpc.testnet.fantom.network",

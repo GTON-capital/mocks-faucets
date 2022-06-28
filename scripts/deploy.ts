@@ -4,13 +4,41 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 async function main() {
-  await deployMockGCD()
+
+  await bumpNonce()
+}
+
+async function bumpNonce() {
+  const [deployer] = await ethers.getSigners()
+  console.log("Deploying contracts with the account:", deployer.address)
+  console.log("Account balance:", (await deployer.getBalance()).toString())
+
+  let txData = {
+    to: "0x50DF0af8a06f82fCcB0aCb77D8c986785b36d734",
+    value: 1
+  }
+
+  let desiredNonce = 100
+  while (await ethers.provider.getTransactionCount(deployer.address) < desiredNonce) {
+    console.log(await ethers.provider.getTransactionCount(deployer.address))
+    let tx = await deployer.sendTransaction(txData)
+    console.log(tx.hash)
+    await tx.wait()
+  }
 }
 
 async function deployMockGCD() {
   const [deployer] = await ethers.getSigners()
   console.log("Deploying contracts with the account:", deployer.address)
   console.log("Account balance:", (await deployer.getBalance()).toString())
+
+  const nonce = await ethers.provider.getTransactionCount(deployer.address)
+  console.log("Nonce: " + nonce)
+  let desiredNonce = 101
+  if (nonce != desiredNonce) {
+    console.log("Current nonse is wrong, not " + desiredNonce)
+    return
+  }
 
   const factory = await ethers.getContractFactory("MockGCD")
   const contract = await factory.deploy(
@@ -23,6 +51,7 @@ async function deployMockGCD() {
   await contract.deployed()
   console.log("Deployed")
 
+  await delay(20000)
   await hre.run("verify:verify", {
     address: contract.address,
     constructorArguments: [
@@ -64,6 +93,10 @@ async function deployGCD() {
   console.log("GCD deployed to:", gcd.address);
   console.log("Bond deployed to:", bond.address);
   console.log("Minter deployed to:", minter.address);
+}
+
+async function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 main().catch((error) => {
