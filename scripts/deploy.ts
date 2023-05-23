@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 async function main() {
 
-  await bumpNonce()
+  // await deployMockGCD()
 }
 
 async function bumpNonce() {
@@ -18,7 +18,7 @@ async function bumpNonce() {
     value: 1
   }
 
-  let desiredNonce = 100
+  let desiredNonce = 106
   while (await ethers.provider.getTransactionCount(deployer.address) < desiredNonce) {
     console.log(await ethers.provider.getTransactionCount(deployer.address))
     let tx = await deployer.sendTransaction(txData)

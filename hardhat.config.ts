@@ -23,17 +23,30 @@ const accounts =
   process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [];
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.14",
+  solidity: "0.8.19",
   networks: {
-    ropsten: {
-      url: "https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+    goerli: {
+      url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
       accounts: accounts,
-      gasPrice: 80 * 1e9,
-      gasMultiplier: 1.1,
     },
-    rinkeby: {
-      url: "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-      accounts: accounts,
+    gton: {
+      url: 'https://rpc.gton.network/',
+      accounts,
+    },
+    testGton: {
+      url: 'https://testnet.gton.network/',
+      accounts,
+    },
+    bsc: {
+      chainId: 56,
+      url: 'https://bsc-dataseed.binance.org',
+
+      accounts,
+    },
+    bscTestnet: {
+      chainId: 97,
+      url: 'https://bsc-testnet.public.blastapi.io',
+      accounts,
     },
     "fantom-testnet": {
       chainId: 4002,

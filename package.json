@@ -34,7 +34,7 @@
   },
   "scripts": {
     "deploy:ropsten": "hardhat run --network ropsten ./scripts/deploy.ts",
-    "deploy:rinkeby": "hardhat run --network rinkeby ./scripts/deploy.ts"
+    "deploy:goerli": "hardhat run --network goerli ./scripts/deploy.ts"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.0",
